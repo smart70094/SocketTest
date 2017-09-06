@@ -4,23 +4,24 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
-public class RegisterRequestDB {
-	String originator,subject;
-	String params="",php="";
-	final String table="registerrequest";
-	public void setParams(String originator,String php) {
-		params="table=registerrequest & originator="+originator;
-		this.php=php;
-	}
+import JSON.JSONArray;
+import JSON.JSONException;
+import JSON.JSONObject;
 
-	public void setParams(String originator,String cmd,String cmdContext,String subject,String php) {
-		this.params="table=registerrequest & originator="+originator+" & cmd="+cmd+" & cmdContext="+cmdContext+" & subject="+subject;
-		this.php=php;
+public class MissionDB {
+	String localhost=SocketTest.localhost;
+	
+	public String writeCollaborator(String tid,String uid,String collaborator) {
+		String result;
+		String params="table=mission & tid="+tid+" & uid="+uid+" & collaborator="+collaborator;
+		String php="updateCollaboratorMission.php";
+		result=viaParams(params,php);
+		return result;
 	}
-	public String start() {
-		return viaParams(params,php);
-	}
+	
 	public String viaParams(String urlParameters,String php){
         byte[] postData = new byte[0];
         try {
@@ -29,7 +30,7 @@ public class RegisterRequestDB {
             e.printStackTrace();
         }
         int postDataLength = postData.length;
-        String checkurl = SocketTest.localhost+php;
+        String checkurl = localhost+php;
         
         StringBuilder sb=null;
         try {

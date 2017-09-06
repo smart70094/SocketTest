@@ -7,54 +7,71 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
 
 public class SocketTest {
-	private static Thread th_close; // °õ¦æºü
+	private static Thread th_close; // åŸ·è¡Œç·’
 	private static int serverport = 12345;
-	private static ServerSocket serverSocket; // ¦øªAºİªºSocket
+	private static ServerSocket serverSocket; // ä¼ºæœç«¯çš„Socket
 	private static Map<String,Socket> map=new HashMap<String,Socket>();
 	private static RegisterRequestDB db=new RegisterRequestDB();
-	
-	
+	static String  ip="192.168.0.102";
+	public static String localhost="http://"+ip+"/TeamGoGoal/";
+	private static final long PERIOD_DAY = 24 * 60 * 60 * 1000;
 	
 	public static void main(String[] args) {
 		try {
-			serverSocket = new ServerSocket(serverport); // ±Ò°ÊServer¶}±ÒPort±µ¤f
-			System.out.println("Server¶}©l°õ¦æ");
-			th_close = new Thread(Judge_Close); // ½á¤©°õ¦æºü¤u§@(§PÂ_socketlist¤º¦³¨S¦³«È¤áºİºô¸ôÂ_½u)
-			th_close.start(); // Åı°õ¦æºü¶}©l°õ¦æ
-			// ·íServer¹B§@¤¤®É
+			/*Timer timer=new Timer();
+			
+			Calendar calendar = Calendar.getInstance();  
+	        calendar.set(Calendar.HOUR_OF_DAY, 14); //å‡Œæ™¨1ç‚¹  
+	        calendar.set(Calendar.MINUTE, 59);  
+	        calendar.set(Calendar.SECOND, 0);  
+	        Date date=calendar.getTime(); //ç¬¬ä¸€æ¬¡æ‰§è¡Œå®šæ—¶ä»»åŠ¡çš„æ—¶é—´   
+	        timer.schedule(new Scheduling(),date,PERIOD_DAY);    
+			new Scheduling().reSet();*/
+	        //new Scheduling().reSet();
+			
+			
+			serverSocket = new ServerSocket(serverport); // å•Ÿå‹•Serveré–‹å•ŸPortæ¥å£
+			System.out.println("Serveré–‹å§‹åŸ·è¡Œ");
+			th_close = new Thread(Judge_Close); // è³¦äºˆåŸ·è¡Œç·’å·¥ä½œ(åˆ¤æ–·socketlistå…§æœ‰æ²’æœ‰å®¢æˆ¶ç«¯ç¶²è·¯æ–·ç·š)
+			th_close.start(); // è®“åŸ·è¡Œç·’é–‹å§‹åŸ·è¡Œ
+			// ç•¶Serveré‹ä½œä¸­æ™‚
 			while (!serverSocket.isClosed()) {
-				// ©I¥sµ¥«İ±µ¨ü«È¤áºİ³s±µ
+				// å‘¼å«ç­‰å¾…æ¥å—å®¢æˆ¶ç«¯é€£æ¥
 				waitNewSocket();
 			}
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(e.toString());
 		}
 	}
 
-	private static Runnable Judge_Close = new Runnable() { // Åı°õ¦æºü¨C¨â¬í§PÂ_¤@¦¸SocketList¤º¬O§_¦³«È¤áºİ±j¨îÂ_½u
+	private static Runnable Judge_Close = new Runnable() { // è®“åŸ·è¡Œç·’æ¯å…©ç§’åˆ¤æ–·ä¸€æ¬¡SocketListå…§æ˜¯å¦æœ‰å®¢æˆ¶ç«¯å¼·åˆ¶æ–·ç·š
 		@Override
-		public void run() {// ¦b¦¹§ì¨úªº¬OÃö³¬wifiµ¥Â_½u°Ê§@
+		public void run() {// åœ¨æ­¤æŠ“å–çš„æ˜¯é—œé–‰wifiç­‰æ–·ç·šå‹•ä½œ
 			// TODO Auto-generated method stub
 			try {
 				while (true) {
-					Thread.sleep(2000); // ¨C¨â¬í°õ¦æ¤@½ü
-					synchronized(this) {
-						for (Map.Entry<String, Socket> set : map.entrySet()) {
+					Thread.sleep(2000); // æ¯å…©ç§’åŸ·è¡Œä¸€è¼ª
+					for (Map.Entry<String, Socket> set : map.entrySet()) {
+						synchronized(this) {
 							if (isServerClose(set.getValue())) {
 								set.getValue().close();
 								map.remove(set.getKey());
 								System.out.println(set.getKey()+":is disconnect.");
 							}
+							
 						}
 					}
-					
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -63,47 +80,47 @@ public class SocketTest {
 		}
 	};
 
-	private static Boolean isServerClose(Socket socket) { // §PÂ_³s½u¬O§_¤¤Â_
+	private static Boolean isServerClose(Socket socket) { // åˆ¤æ–·é€£ç·šæ˜¯å¦ä¸­æ–·
 		try {
-			socket.sendUrgentData(0); // µo°e¤@­Ó¦r¸`ªººò«æ¼Æ¾Ú,Àq»{±¡ªp¤U¬O¨S¦³¶}±Òºò«æ¼Æ¾Ú³B²z,¤£¼vÅT¥¿±`³s½u
-			return false; // ¦p¥¿±`«h¦^¶Çfalse
+			socket.sendUrgentData(0); // ç™¼é€ä¸€å€‹å­—ç¯€çš„ç·Šæ€¥æ•¸æ“š,é»˜èªæƒ…æ³ä¸‹æ˜¯æ²’æœ‰é–‹å•Ÿç·Šæ€¥æ•¸æ“šè™•ç†,ä¸å½±éŸ¿æ­£å¸¸é€£ç·š
+			return false; // å¦‚æ­£å¸¸å‰‡å›å‚³false
 		} catch (Exception e) {
-			return true; // ¦p³s½u¤¤Â_«h¦^¶Çtrue
+			return true; // å¦‚é€£ç·šä¸­æ–·å‰‡å›å‚³true
 		}
 	}
 
-	// µ¥«İ±µ¨ü«È¤áºİ³s±µ
+	// ç­‰å¾…æ¥å—å®¢æˆ¶ç«¯é€£æ¥
 	public static void waitNewSocket() {
 		try {
 			Socket socket = serverSocket.accept();
-			// ©I¥s³Ğ³y·sªº¨Ï¥ÎªÌ
+			// å‘¼å«å‰µé€ æ–°çš„ä½¿ç”¨è€…
 			createNewThread(socket);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	// ³Ğ³y·sªº¨Ï¥ÎªÌ
+	// å‰µé€ æ–°çš„ä½¿ç”¨è€…
 	public static void createNewThread(final Socket socket) {
-		// ¥H·sªº°õ¦æºü¨Ó°õ¦æ
+		// ä»¥æ–°çš„åŸ·è¡Œç·’ä¾†åŸ·è¡Œ
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    // ¼W¥[·sªº¨Ï¥ÎªÌ
+                    // å¢åŠ æ–°çš„ä½¿ç”¨è€…
                     
-                    //¨ú±oºô¸ô¿é¥X¦ê¬y
+                    //å–å¾—ç¶²è·¯è¼¸å‡ºä¸²æµ
                     OutputStream out=socket.getOutputStream(); 
-                    // ¨ú±oºô¸ô¿é¤J¦ê¬y
+                    // å–å¾—ç¶²è·¯è¼¸å…¥ä¸²æµ
                     BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     String tmp,result = null;
                     
-                    // ·íSocket¤w³s±µ®É³sÄò°õ¦æ
+                    // ç•¶Socketå·²é€£æ¥æ™‚é€£çºŒåŸ·è¡Œ
                     while (socket.isConnected()) {
-                              //«Å§i¤@­Ó½w½Ä,±qbr¦ê¬yÅª¨ú­È
-                        // ¦pªG¤£¬OªÅ°T®§
+                              //å®£å‘Šä¸€å€‹ç·©è¡,å¾brä¸²æµè®€å–å€¼
+                        // å¦‚æœä¸æ˜¯ç©ºè¨Šæ¯
                         if(br.ready()){
-                            //±q«È¤áºİ¨ú±o­È«á°µ©î¸Ñ,¥i¨Ï¥Îswitch°µ¤£¦P°Ê§@ªº³B²z»P¦^À³
+                            //å¾å®¢æˆ¶ç«¯å–å¾—å€¼å¾Œåšæ‹†è§£,å¯ä½¿ç”¨switchåšä¸åŒå‹•ä½œçš„è™•ç†èˆ‡å›æ‡‰
                         	tmp = br.readLine();  
                         	System.out.println(tmp);
                         	String arr[]=tmp.split(",");
@@ -118,6 +135,8 @@ public class SocketTest {
                         			break;
                         		case "register_cheer":
                         			result=registerCheer(arr[1],arr[2],arr[3],socket);
+                        	
+                        		
                         	}
                         	if(result!=null) {
                         		result=result.trim();
@@ -135,19 +154,18 @@ public class SocketTest {
                 }  
             }
         });
-        // ±Ò°Ê°õ¦æºü
+        // å•Ÿå‹•åŸ·è¡Œç·’
         t.start();
     }
 	public static String registerCheer(String originator,String subject,String msg,Socket socket) {
 		String result=null;
 		try {
-			if(!map.containsKey(originator)) {
+			if(map.containsKey(subject)) {
 				result=msg.trim()+"\n";
-				return result;
+				writer(subject,result);
 			}else {
 				db.setParams(originator, "request_cheer", msg, subject, "createRegisterRequest.php");
 				db.start();
-				return "\n";
 			}
 			
 		}catch(Exception e) {
@@ -171,14 +189,19 @@ public class SocketTest {
 	public static String registerRequest(String originator,String subject,String tid,Socket socket) {
 		try {
 			if(map.containsKey(subject)) {
-				//trans request to app
 				String params=tid+"\n";
-				//System.out.println(params);
-				return params;
+				writer(subject,params);
 			}
 		}catch(Exception e) {
 			System.out.println(e.toString());
 		}
-		return "";
+		return "\n";A
+	}
+	public static void writer(String subject,String msg) throws IOException {
+		Socket socket=map.get(subject);
+		OutputStream out=socket.getOutputStream(); 
+    	out.write(msg.getBytes());
+    	out.flush();
+    	
 	}
 }

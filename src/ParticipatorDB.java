@@ -4,23 +4,33 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
-public class RegisterRequestDB {
-	String originator,subject;
-	String params="",php="";
-	final String table="registerrequest";
-	public void setParams(String originator,String php) {
-		params="table=registerrequest & originator="+originator;
-		this.php=php;
-	}
+import JSON.JSONArray;
+import JSON.JSONException;
+import JSON.JSONObject;
 
-	public void setParams(String originator,String cmd,String cmdContext,String subject,String php) {
-		this.params="table=registerrequest & originator="+originator+" & cmd="+cmd+" & cmdContext="+cmdContext+" & subject="+subject;
-		this.php=php;
+public class ParticipatorDB {
+	String localhost=SocketTest.localhost;
+	
+	public Map<String,String> read() {
+		Map<String, String> map=new HashMap<String,String>();
+        try {
+            String s=viaParams("","readAllParticipator.php");
+            JSONArray array = new JSONArray(s.toString());
+            for (int i=0; i<array.length(); i++){
+                JSONObject obj = array.getJSONObject(i);
+                String tid=obj.getString("tid").trim();
+                String uid=obj.getString("uid").trim();
+                map.put(tid, map.get(tid)+","+uid);
+            }
+        } catch(JSONException e){
+            System.out.println(e.toString());
+        }
+        return map;
 	}
-	public String start() {
-		return viaParams(params,php);
-	}
+	
 	public String viaParams(String urlParameters,String php){
         byte[] postData = new byte[0];
         try {
@@ -29,7 +39,7 @@ public class RegisterRequestDB {
             e.printStackTrace();
         }
         int postDataLength = postData.length;
-        String checkurl = SocketTest.localhost+php;
+        String checkurl = localhost+php;
         
         StringBuilder sb=null;
         try {
